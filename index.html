@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bengala Smart</title>
+<meta name="description" content="Configuração da Bengala Smart v2.0 pelo Bluetooth">
+<meta name="theme-color" content="#0b1120">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #0b1120; --card: #111a2e; --card2: #0f172a; --borda: rgba(255,255,255,.09);
+    --pri: #38bdf8; --ok: #10b981; --aviso: #f59e0b; --erro: #ef4444;
+    --txt: #f8fafc; --mut: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--txt); min-height: 100vh;
+    padding: calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  }
+  main { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+  header { display: flex; align-items: center; gap: 12px; }
+  header img { width: 44px; height: 44px; border-radius: 12px; }
+  header h1 { font-size: 1.35rem; }
+  header p { color: var(--mut); font-size: .85rem; }
+  .card { background: var(--card); border: 1px solid var(--borda); border-radius: 18px; padding: 16px; }
+  .card h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--mut); margin-bottom: 12px; }
+  button { font: inherit; color: inherit; border: none; cursor: pointer; }
+  .btn { width: 100%; min-height: 56px; border-radius: 14px; font-size: 1.05rem; font-weight: 700; }
+  .btn-pri { background: var(--pri); color: #0f172a; }
+  .btn-sec { background: rgba(255,255,255,.08); border: 1px solid var(--borda); }
+  .btn:disabled { opacity: .45; }
+  .status { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pill { background: var(--card2); border-radius: 14px; padding: 12px; display: flex; align-items: center; gap: 10px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--mut); flex: none; }
+  .dot.ok { background: var(--ok); box-shadow: 0 0 10px var(--ok); }
+  .dot.erro { background: var(--erro); }
+  .pill b { display: block; font-size: .95rem; }
+  .pill small { color: var(--mut); font-size: .75rem; }
+  .dists { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .dist { background: var(--card2); border-radius: 14px; padding: 12px 8px; text-align: center; border: 2px solid transparent; transition: border-color .2s; }
+  .dist .rot { font-size: .75rem; color: var(--mut); text-transform: uppercase; letter-spacing: .05em; }
+  .dist .val { font-size: 1.7rem; font-weight: 800; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .dist .un { font-size: .8rem; color: var(--mut); }
+  .dist.perto { border-color: var(--aviso); }
+  .dist.critico { border-color: var(--erro); }
+  .dist .det { font-size: .68rem; color: var(--mut); margin-top: 4px; }
+  .cabeca { margin-top: 8px; background: var(--card2); border-radius: 14px; padding: 10px 12px; display: flex; justify-content: space-between; font-size: .9rem; }
+  .cabeca span:first-child { color: var(--mut); }
+  .campo { margin-bottom: 18px; }
+  .campo:last-child { margin-bottom: 0; }
+  .campo label, .campo .rot { display: flex; justify-content: space-between; font-size: .95rem; margin-bottom: 10px; }
+  .campo output { font-weight: 800; color: var(--pri); }
+  input[type=range] { width: 100%; height: 36px; accent-color: var(--pri); }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: var(--card2); padding: 4px; border-radius: 14px; }
+  .seg button { min-height: 48px; border-radius: 11px; font-weight: 600; font-size: .9rem; background: transparent; color: var(--mut); }
+  .seg button[aria-pressed=true] { background: var(--pri); color: #0f172a; }
+  .toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; width: 100%;
+            background: var(--card2); border-radius: 14px; padding: 0 14px; margin-bottom: 8px; text-align: left; font-size: .95rem; }
+  .toggle .chave { width: 52px; height: 30px; border-radius: 15px; background: #334155; position: relative; flex: none; transition: background .2s; }
+  .toggle .chave::after { content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .2s; }
+  .toggle[aria-checked=true] .chave { background: var(--ok); }
+  .toggle[aria-checked=true] .chave::after { transform: translateX(22px); }
+  .sync { font-size: .82rem; color: var(--mut); margin-top: 12px; min-height: 1.2em; }
+  .aviso { background: rgba(245,158,11,.12); color: #fbbf24; border-radius: 14px; padding: 14px; font-size: .9rem; line-height: 1.45; }
+  .erro-msg { background: rgba(239,68,68,.12); color: #fca5a5; }
+  .oculto { display: none !important; }
+  footer { text-align: center; color: var(--mut); font-size: .75rem; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="icon-192.png" alt="">
+    <div>
+      <h1>Bengala Smart</h1>
+      <p>Configuração pelo Bluetooth</p>
+    </div>
+  </header>
+
+  <div class="aviso erro-msg oculto" id="sem-bluetooth" role="alert">
+    Este navegador não tem Bluetooth Web. Use o <b>Chrome no Android</b> (com o Bluetooth do celular ligado).
+    No iPhone não funciona.
+  </div>
+
+  <section class="card" id="card-conexao">
+    <div class="status">
+      <div class="pill"><span class="dot" id="dot-caixa"></span><div><b>Caixa</b><small id="txt-caixa">desconectada</small></div></div>
+      <div class="pill"><span class="dot" id="dot-oculos"></span><div><b>Óculos</b><small id="txt-oculos">—</small></div></div>
+    </div>
+    <button class="btn btn-pri" id="btn-conectar" style="margin-top:12px">Conectar à caixa</button>
+  </section>
+
+  <section class="card" id="card-dados" aria-live="off">
+    <h2>Obstáculos</h2>
+    <div class="dists">
+      <div class="dist" id="d1"><div class="rot">Esquerda</div><div class="val">—</div><div class="det"></div></div>
+      <div class="dist" id="d0"><div class="rot">Frente</div><div class="val">—</div><div class="det"></div></div>
+      <div class="dist" id="d2"><div class="rot">Direita</div><div class="val">—</div><div class="det"></div></div>
+    </div>
+    <div class="cabeca"><span>Laser da cabeça (óculos)</span><span id="cabeca">—</span></div>
+  </section>
+
+  <section class="card">
+    <h2>Óculos</h2>
+    <div class="campo">
+      <label for="nivel">Intensidade <output id="nivel-out">—</output></label>
+      <input type="range" id="nivel" min="0" max="100" step="5" value="60" disabled>
+    </div>
+    <div class="campo">
+      <div class="rot" id="rot-modo">Avisar com</div>
+      <div class="seg" role="group" aria-labelledby="rot-modo" id="modo">
+        <button data-v="1" aria-pressed="false" disabled>Vibração</button>
+        <button data-v="0" aria-pressed="false" disabled>Som</button>
+        <button data-v="2" aria-pressed="false" disabled>Ambos</button>
+      </div>
+    </div>
+    <div class="campo">
+      <button class="toggle" role="switch" aria-checked="false" id="alertasBengala" disabled>
+        <span>Alertas dos sensores da bengala</span><span class="chave"></span></button>
+      <button class="toggle" role="switch" aria-checked="false" id="alertasCabeca" disabled>
+        <span>Alertas do laser da cabeça</span><span class="chave"></span></button>
+    </div>
+    <p class="sync" id="sync"></p>
+  </section>
+
+  <section class="card">
+    <h2>Buzzer da caixa</h2>
+    <div class="campo">
+      <div class="rot" id="rot-bipe">Bipe de proximidade</div>
+      <div class="seg" role="group" aria-labelledby="rot-bipe" id="bipe">
+        <button data-v="0" aria-pressed="false" disabled>Desligado</button>
+        <button data-v="2" aria-pressed="false" disabled>Sem óculos</button>
+        <button data-v="1" aria-pressed="false" disabled>Sempre</button>
+      </div>
+    </div>
+    <button class="btn btn-sec" id="btn-testar" disabled>Bipe de teste</button>
+  </section>
+
+  <footer>Bengala Smart v2.0 · funciona sem internet depois de instalado</footer>
+</main>
+
+<script>
+// ---- Protocolo (espelho de include/protocolo_ble.h) ----
+const UUID_SERVICO  = '7b6a0001-3c1f-4b8e-9a52-62656e67616c';
+const UUID_SENSORES = '7b6a0002-3c1f-4b8e-9a52-62656e67616c';
+const UUID_OCULOS   = '7b6a0003-3c1f-4b8e-9a52-62656e67616c';
+const UUID_COMANDO  = '7b6a0004-3c1f-4b8e-9a52-62656e67616c';
+const SEM_LEITURA = 0xFFFF;
+const FLAG_OCULOS_ONLINE = 0x01;
+
+function lerSensores(dv) {  // EstadoSensoresBle, 20 bytes little-endian
+  const u16 = o => dv.getUint16(o, true);
+  return {
+    versao: dv.getUint8(0), flags: dv.getUint8(1),
+    dist: [u16(2), u16(4), u16(6)], laser: [u16(8), u16(10), u16(12)], usCm: [u16(14), u16(16), u16(18)],
+  };
+}
+
+function lerOculos(dv) {  // EstadoOculosBle, 20 bytes little-endian
+  return {
+    configVersao: dv.getUint32(0, true), versaoAplicada: dv.getUint32(4, true),
+    laserCabecaMm: dv.getUint16(8, true), rssi: dv.getInt8(10),
+    nivel: dv.getUint8(11), modo: dv.getUint8(12), alertasBengala: dv.getUint8(13),
+    alertasCabeca: dv.getUint8(14), bipeModo: dv.getUint8(15), uptimeS: dv.getUint32(16, true),
+  };
+}
+
+// ---- Estado ----
+const $ = id => document.getElementById(id);
+let dispositivo = null, chComando = null, oculos = null, sensores = null;
+let desconexaoPedida = false;
+
+// Operações GATT não podem se sobrepor ("GATT operation already in progress"): fila.
+let filaGatt = Promise.resolve();
+function enviar(comando) {
+  if (!chComando) return Promise.reject(new Error('desconectado'));
+  const p = filaGatt.then(() => chComando.writeValueWithResponse(new TextEncoder().encode(comando)));
+  filaGatt = p.catch(() => {});
+  return p;
+}
+
+function habilitarControles(on) {
+  document.querySelectorAll('#nivel, #modo button, #bipe button, .toggle, #btn-testar').forEach(el => el.disabled = !on);
+}
+
+function formatarCm(mm) { return mm === SEM_LEITURA ? null : Math.round(mm / 10); }
+
+function pintarSensores() {
+  if (!sensores) return;
+  sensores.dist.forEach((mm, i) => {
+    const el = $('d' + i), cm = formatarCm(mm);
+    el.querySelector('.val').innerHTML = cm === null ? 'livre' : cm + '<span class="un"> cm</span>';
+    el.classList.toggle('critico', cm !== null && cm < 20);
+    el.classList.toggle('perto', cm !== null && cm >= 20 && cm < 100);
+    const l = formatarCm(sensores.laser[i]), u = sensores.usCm[i];
+    el.querySelector('.det').innerText = 'laser ' + (l === null ? '—' : l) + ' · ultras. ' + (u === SEM_LEITURA ? '—' : u);
+  });
+  const online = sensores.flags & FLAG_OCULOS_ONLINE;
+  $('dot-oculos').className = 'dot ' + (online ? 'ok' : 'erro');
+  $('txt-oculos').innerText = online ? 'conectado à caixa' + (oculos ? ' · ' + oculos.rssi + ' dBm' : '') : 'desconectado';
+}
+
+function pintarOculos() {
+  if (!oculos) return;
+  const nivel = $('nivel');
+  if (document.activeElement !== nivel) { nivel.value = oculos.nivel; $('nivel-out').value = oculos.nivel + '%'; }
+  document.querySelectorAll('#modo button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === oculos.modo));
+  document.querySelectorAll('#bipe button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === oculos.bipeModo));
+  $('alertasBengala').setAttribute('aria-checked', !!oculos.alertasBengala);
+  $('alertasCabeca').setAttribute('aria-checked', !!oculos.alertasCabeca);
+  const cm = formatarCm(oculos.laserCabecaMm);
+  $('cabeca').innerText = cm === null ? 'livre' : cm + ' cm';
+  const online = sensores && (sensores.flags & FLAG_OCULOS_ONLINE);
+  $('sync').innerText = !online ? 'Óculos desconectado: a configuração fica salva na caixa e é enviada quando ele conectar.'
+    : oculos.versaoAplicada === oculos.configVersao ? '✅ Configuração aplicada no óculos.' : '⏳ Enviando ao óculos…';
+}
+
+function marcarDesconectado(texto) {
+  chComando = null;
+  $('dot-caixa').className = 'dot erro';
+  $('txt-caixa').innerText = texto;
+  $('dot-oculos').className = 'dot';
+  $('txt-oculos').innerText = '—';
+  $('btn-conectar').innerText = 'Conectar à caixa';
+  $('btn-conectar').disabled = false;
+  habilitarControles(false);
+}
+
+async function conectarGatt() {
+  $('txt-caixa').innerText = 'conectando…';
+  const servidor = await dispositivo.gatt.connect();
+  const servico = await servidor.getPrimaryService(UUID_SERVICO);
+  const chSens = await servico.getCharacteristic(UUID_SENSORES);
+  const chOcul = await servico.getCharacteristic(UUID_OCULOS);
+  chComando = await servico.getCharacteristic(UUID_COMANDO);
+
+  sensores = lerSensores(await chSens.readValue());
+  oculos = lerOculos(await chOcul.readValue());
+  chSens.addEventListener('characteristicvaluechanged', e => { sensores = lerSensores(e.target.value); pintarSensores(); });
+  chOcul.addEventListener('characteristicvaluechanged', e => { oculos = lerOculos(e.target.value); pintarOculos(); });
+  await chSens.startNotifications();
+  await chOcul.startNotifications();
+
+  $('dot-caixa').className = 'dot ok';
+  $('txt-caixa').innerText = 'conectada';
+  $('btn-conectar').innerText = 'Desconectar';
+  $('btn-conectar').disabled = false;
+  habilitarControles(true);
+  pintarSensores();
+  pintarOculos();
+}
+
+// Caiu sem o usuário pedir (saiu de alcance, caixa reiniciou): tenta voltar sozinho.
+async function reconectar() {
+  for (let tentativa = 1; tentativa <= 5 && dispositivo && !desconexaoPedida; tentativa++) {
+    marcarDesconectado('reconectando (' + tentativa + '/5)…');
+    $('btn-conectar').disabled = true;
+    try { await conectarGatt(); return; } catch (e) { await new Promise(r => setTimeout(r, 2000)); }
+  }
+  marcarDesconectado('desconectada');
+}
+
+$('btn-conectar').addEventListener('click', async () => {
+  if (chComando) {  // conectado: desconectar
+    desconexaoPedida = true;
+    dispositivo.gatt.disconnect();
+    return;
+  }
+  try {
+    desconexaoPedida = false;
+    $('btn-conectar').disabled = true;
+    if (!dispositivo) {
+      dispositivo = await navigator.bluetooth.requestDevice({ filters: [{ services: [UUID_SERVICO] }] });
+      dispositivo.addEventListener('gattserverdisconnected', () => desconexaoPedida ? marcarDesconectado('desconectada') : reconectar());
+    }
+    await conectarGatt();
+  } catch (e) {
+    marcarDesconectado(e.name === 'NotFoundError' ? 'nenhuma caixa escolhida' : 'falhou: ' + e.message);
+  }
+});
+
+// ---- Controles ----
+$('nivel').addEventListener('input', e => $('nivel-out').value = e.target.value + '%');
+$('nivel').addEventListener('change', e => enviar('nivel=' + e.target.value));
+document.querySelectorAll('#modo button').forEach(b => b.addEventListener('click', () => enviar('modo=' + b.dataset.v)));
+document.querySelectorAll('#bipe button').forEach(b => b.addEventListener('click', () => enviar('bipe=' + b.dataset.v)));
+['alertasBengala', 'alertasCabeca'].forEach(id => $(id).addEventListener('click', () =>
+  enviar(id + '=' + ($(id).getAttribute('aria-checked') === 'true' ? 0 : 1))));
+$('btn-testar').addEventListener('click', () => enviar('buzzer=300'));
+
+if (!navigator.bluetooth) {
+  $('sem-bluetooth').classList.remove('oculto');
+  $('btn-conectar').disabled = true;
+}
+
+// Funciona offline depois da primeira visita (na rua não tem internet)
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
